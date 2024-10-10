@@ -1,6 +1,23 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "../components/Header";
+
+// Function to create a new folder via POST request
+const createFolder = async (newFolderName) => {
+  const response = await fetch("http://localhost:8080/api/folders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: newFolderName }), // Send the folder name in the request body
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create folder");
+  }
+
+  return response.json();
+};
 
 // Function to fetch folders from the API with optional search query
 const fetchFolders = async (searchQuery = "") => {
@@ -27,6 +44,7 @@ const fetchSortedFolders = async (sortOrder) => {
 const FoldersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState(""); // State to manage sorting order
+  const queryClient = useQueryClient(); // React Query's client for cache management
 
   // Use React Query to fetch folders based on search query
   const {
@@ -49,6 +67,14 @@ const FoldersPage = () => {
     enabled: !!sortOrder, // Only fetch when sortOrder is set
   });
 
+  // Create a mutation to handle folder creation
+  const folderMutation = useMutation({
+    mutationFn: createFolder,
+    onSuccess: () => {
+      queryClient.invalidateQueries("folders"); // Invalidate the folders query to refetch the list
+    },
+  });
+
   // Handle search input change
   const handleSearch = (query) => {
     setSearchQuery(query); // Update searchQuery state, triggering a new fetch
@@ -65,8 +91,9 @@ const FoldersPage = () => {
     setSearchQuery(""); // Reset search query when sorting
   };
 
-  const handleNew = () => {
-    console.log("Create new folder");
+  // Function to handle new folder creation
+  const handleNewFolder = (newTitle) => {
+    folderMutation.mutate(newTitle); // Trigger the mutation to create a folder
   };
 
   // Choose which folder data to display based on whether sorting is applied
@@ -77,7 +104,7 @@ const FoldersPage = () => {
       <Header
         title="Folders"
         onSearch={handleSearch} // Search handler will update searchQuery
-        onNew={handleNew}
+        onNew={handleNewFolder}
         onFilter={handleFilter} // Pass the filter handler
       />
       <div className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-3">

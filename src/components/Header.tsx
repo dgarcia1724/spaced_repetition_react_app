@@ -27,6 +27,7 @@ const Header = ({ title, onSearch, onNew, onFilter }) => {
   const closeModal = () => {
     setIsFilterModalOpen(false);
     setIsNewModalOpen(false);
+    setNewTitle(""); // Reset the input field when modal is closed
   };
 
   const handleOptionClick = (option) => {
@@ -57,19 +58,25 @@ const Header = ({ title, onSearch, onNew, onFilter }) => {
   // Close filter modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
+      // Close the filter modal if click happens outside of it
       if (
         filterModalRef.current &&
         !filterModalRef.current.contains(e.target)
       ) {
         setIsFilterModalOpen(false);
       }
+      // Close the new folder modal if click happens outside of it
       if (newModalRef.current && !newModalRef.current.contains(e.target)) {
-        setIsNewModalOpen(false);
+        closeModal(); // This will reset the input field and close the modal
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [newModalRef, filterModalRef]);
 
   return (
     <div className="px-4 py-2 bg-white shadow-sm sticky top-0 z-[10] space-y-2">
