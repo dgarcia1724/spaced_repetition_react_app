@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "../components/Header";
 
-// Function to fetch folders from the API
-const fetchFolders = async () => {
-  const response = await fetch("http://localhost:8080/api/folders");
+// Function to fetch folders from the API with optional search query
+const fetchFolders = async (searchQuery = "") => {
+  const response = await fetch(
+    `http://localhost:8080/api/folders/search?prefix=${searchQuery}`
+  );
   if (!response.ok) {
     throw new Error("Network response was not ok");
   }
@@ -12,18 +14,21 @@ const fetchFolders = async () => {
 };
 
 const FoldersPage = () => {
-  // Use React Query to fetch folders
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Use React Query to fetch folders based on search query
   const {
     data: folders,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["folders"],
-    queryFn: fetchFolders,
+    queryKey: ["folders", searchQuery], // queryKey includes the search query
+    queryFn: () => fetchFolders(searchQuery), // Pass the search query to the fetch function
   });
 
+  // Handle search input change
   const handleSearch = (query) => {
-    console.log(`Search for folder: ${query}`);
+    setSearchQuery(query); // Update searchQuery state, triggering a new fetch
   };
 
   const handleNew = () => {
@@ -38,7 +43,7 @@ const FoldersPage = () => {
     <div className="flex-grow">
       <Header
         title="Folders"
-        onSearch={handleSearch}
+        onSearch={handleSearch} // Search handler will update searchQuery
         onNew={handleNew}
         onFilter={handleFilter}
       />
@@ -47,13 +52,14 @@ const FoldersPage = () => {
           <p>Loading folders...</p>
         ) : error ? (
           <p>Error loading folders: {error.message}</p>
-        ) : (
+        ) : folders.length > 0 ? (
           folders.map((folder, index) => (
             <div key={index} className="bg-gray-100 rounded-lg p-4 shadow">
-              {folder.name}{" "}
-              {/* Assuming the API returns an object with a 'name' property */}
+              {folder.name}
             </div>
           ))
+        ) : (
+          <p>No matching folders</p>
         )}
       </div>
     </div>
