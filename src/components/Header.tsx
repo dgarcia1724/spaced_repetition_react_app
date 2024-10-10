@@ -4,6 +4,7 @@ const Header = ({ title, onSearch, onNew, onFilter }) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState(""); // State to hold input for new list/folder
+  const [searchInput, setSearchInput] = useState(""); // State for search input
   const filterModalRef = useRef();
   const newModalRef = useRef();
 
@@ -26,6 +27,20 @@ const Header = ({ title, onSearch, onNew, onFilter }) => {
   const closeModal = () => {
     setIsFilterModalOpen(false);
     setIsNewModalOpen(false);
+  };
+
+  const handleOptionClick = (option) => {
+    // Call the onFilter function with the selected option
+    onFilter(option);
+    setSearchInput(""); // Reset the search input field
+
+    // Leave this commented out!!!
+    // --- Don't want to call onSearch bc we want to filter by a-z or z-a.
+    // --- Calling onSearch will not let us filter & will just give all folders in original order.
+    // 🔽🔽🔽
+    // onSearch(""); // Reset search query in the parent component
+    // 🔼🔼🔼
+    closeModal(); // Close modal after selecting an option
   };
 
   // Close modal on ESC key press
@@ -78,7 +93,11 @@ const Header = ({ title, onSearch, onNew, onFilter }) => {
           type="text"
           placeholder={`Search ${title.toLowerCase()}`}
           className="ml-4 px-2 py-1 border rounded w-2/3"
-          onChange={(e) => onSearch(e.target.value)}
+          value={searchInput} // Bind the value to searchInput state
+          onChange={(e) => {
+            setSearchInput(e.target.value); // Update search input state
+            onSearch(e.target.value); // Update the parent with the new search query
+          }}
         />
       </div>
 
@@ -92,15 +111,15 @@ const Header = ({ title, onSearch, onNew, onFilter }) => {
             <h2 className="text-lg font-bold mb-4">Filter by</h2>
             <button
               className="block w-full text-left p-2 hover:bg-gray-100"
-              onClick={() => handleOptionClick("recent")}
+              onClick={() => handleOptionClick("titleAtoZ")}
             >
-              Recent
+              Title (A-Z)
             </button>
             <button
               className="block w-full text-left p-2 hover:bg-gray-100"
-              onClick={() => handleOptionClick("title")}
+              onClick={() => handleOptionClick("titleZtoA")}
             >
-              Title
+              Title (Z-A)
             </button>
             <button
               className="mt-4 w-full p-2 bg-red-500 text-white rounded"
