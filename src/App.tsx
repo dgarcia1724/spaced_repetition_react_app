@@ -8,6 +8,7 @@ import TopNav from "./components/TopNav";
 import HomePage from "./pages/Home";
 import FoldersPage from "./pages/FoldersPage";
 import ProblemsPage from "./pages/ProblemsPage";
+import ListsPage from "./pages/ListsPage";
 
 function App() {
   return (
@@ -16,8 +17,9 @@ function App() {
         <TopNav />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/problems/:list" element={<ProblemsPage />} />
           <Route path="/folders" element={<FoldersPage />} />
+          <Route path="/folders/:folderId/lists" element={<ListsPage />} />
+          <Route path="/problems/:list" element={<ProblemsPage />} />
         </Routes>
       </div>
     </Router>

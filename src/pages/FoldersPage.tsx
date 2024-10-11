@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "../components/Header";
+import { useNavigate } from "react-router-dom";
 
 // Function to create a new folder via POST request
 const createFolder = async (newFolderName) => {
@@ -45,6 +46,7 @@ const FoldersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState(""); // State to manage sorting order
   const queryClient = useQueryClient(); // React Query's client for cache management
+  const navigate = useNavigate(); // Initialize navigate
 
   // Use React Query to fetch folders based on search query
   const {
@@ -99,6 +101,11 @@ const FoldersPage = () => {
   // Choose which folder data to display based on whether sorting is applied
   const displayFolders = sortOrder ? sortedFolders : folders;
 
+  // Handle folder click, navigate to the Lists page with the folder ID
+  const handleFolderClick = (folderId) => {
+    navigate(`/folders/${folderId}/lists`); // Navigate to Lists page with folder ID
+  };
+
   return (
     <div className="flex-grow">
       <Header
@@ -113,8 +120,12 @@ const FoldersPage = () => {
         ) : error || sortedError ? (
           <p>Error loading folders: {error?.message || sortedError?.message}</p>
         ) : displayFolders.length > 0 ? (
-          displayFolders.map((folder, index) => (
-            <div key={index} className="bg-gray-100 rounded-lg p-4 shadow">
+          displayFolders.map((folder) => (
+            <div
+              key={folder.id}
+              className="bg-gray-100 rounded-lg p-4 shadow cursor-pointer"
+              onClick={() => handleFolderClick(folder.id)}
+            >
               {folder.name}
             </div>
           ))
