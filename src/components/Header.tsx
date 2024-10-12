@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Modal from "./Modal";
 
 const Header = ({ title, onSearch, onNew, onFilter }) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -108,64 +109,54 @@ const Header = ({ title, onSearch, onNew, onFilter }) => {
         />
       </div>
 
-      {/* Filter Modal for filter options */}
-      {isFilterModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-          <div
-            ref={filterModalRef}
-            className="bg-white p-4 rounded shadow-lg w-64"
+      {/* Filter Modal */}
+      <Modal isOpen={isFilterModalOpen} onClose={closeModal} title="Filter by">
+        <div ref={filterModalRef}>
+          <button
+            className="block w-full text-left p-2 hover:bg-gray-100"
+            onClick={() => handleOptionClick("titleAtoZ")}
           >
-            <h2 className="text-lg font-bold mb-4">Filter by</h2>
-            <button
-              className="block w-full text-left p-2 hover:bg-gray-100"
-              onClick={() => handleOptionClick("titleAtoZ")}
-            >
-              Title (A-Z)
-            </button>
-            <button
-              className="block w-full text-left p-2 hover:bg-gray-100"
-              onClick={() => handleOptionClick("titleZtoA")}
-            >
-              Title (Z-A)
-            </button>
-            <button
-              className="mt-4 w-full p-2 bg-red-500 text-white rounded"
-              onClick={closeModal}
-            >
-              Close
-            </button>
-          </div>
+            Title (A-Z)
+          </button>
+          <button
+            className="block w-full text-left p-2 hover:bg-gray-100"
+            onClick={() => handleOptionClick("titleZtoA")}
+          >
+            Title (Z-A)
+          </button>
+          <button
+            className="mt-4 w-full p-2 bg-red-500 text-white rounded"
+            onClick={closeModal}
+          >
+            Close
+          </button>
         </div>
-      )}
+      </Modal>
 
       {/* New List/Folder Modal */}
-      {isNewModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-          <div
-            ref={newModalRef}
-            className="bg-white p-4 rounded shadow-lg w-80" // Added m-0 here
-          >
-            <h2 className="text-lg font-bold mb-4">
-              Create a new {title.slice(0, -1).toLowerCase()}
-            </h2>
-            <input
-              type="text"
-              placeholder="Enter title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full px-2 py-1 border rounded mb-4"
-            />
-            <div className="flex justify-end">
-              <button
-                className="px-4 py-2 bg-blue-500 text-white rounded"
-                onClick={handleCreate}
-              >
-                Create
-              </button>
-            </div>
+      <Modal
+        isOpen={isNewModalOpen}
+        onClose={closeModal}
+        title={`Create a new ${title.slice(0, -1).toLowerCase()}`}
+      >
+        <div ref={newModalRef}>
+          <input
+            type="text"
+            placeholder="Enter title"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="w-full px-2 py-1 border rounded mb-4"
+          />
+          <div className="flex justify-end">
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+              onClick={handleCreate}
+            >
+              Create
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

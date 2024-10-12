@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
+import ItemActions from "../components/ItemActions";
+import Modal from "../components/Modal"; // Make sure you have this component
 
 // Function to create a new folder via POST request
 const createFolder = async (newFolderName) => {
@@ -42,79 +44,134 @@ const fetchSortedFolders = async (sortOrder) => {
   return response.json();
 };
 
+// Add this function to update a folder
+const updateFolder = async ({ id, newName }) => {
+  const response = await fetch(`http://localhost:8080/api/folders/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: newName }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update folder");
+  }
+
+  return response.json();
+};
+
 const FoldersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState(""); // State to manage sorting order
-  const queryClient = useQueryClient(); // React Query's client for cache management
-  const navigate = useNavigate(); // Initialize navigate
+  const [sortOrder, setSortOrder] = useState("");
+  const [editingFolder, setEditingFolder] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  // Use React Query to fetch folders based on search query
   const {
     data: folders,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["folders", searchQuery], // queryKey includes only searchQuery
-    queryFn: () => fetchFolders(searchQuery), // Pass the search query to the fetch function
+    queryKey: ["folders", searchQuery],
+    queryFn: () => fetchFolders(searchQuery),
   });
 
-  // Use React Query to fetch sorted folders when sortOrder changes
   const {
     data: sortedFolders,
     isLoading: isLoadingSorted,
     error: sortedError,
   } = useQuery({
-    queryKey: ["sortedFolders", sortOrder], // queryKey includes sortOrder
+    queryKey: ["sortedFolders", sortOrder],
     queryFn: () => fetchSortedFolders(sortOrder),
-    enabled: !!sortOrder, // Only fetch when sortOrder is set
+    enabled: !!sortOrder,
   });
 
-  // Create a mutation to handle folder creation
   const folderMutation = useMutation({
     mutationFn: createFolder,
     onSuccess: () => {
-      queryClient.invalidateQueries("folders"); // Invalidate the folders query to refetch the list
+      queryClient.invalidateQueries("folders");
     },
   });
 
-  // Handle search input change
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (id) => {
+      const response = await fetch(`http://localhost:8080/api/folders/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete folder");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["folders"]);
+      queryClient.invalidateQueries(["sortedFolders"]);
+    },
+  });
+
+  // Add this mutation for updating folders
+  const updateFolderMutation = useMutation({
+    mutationFn: updateFolder,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["folders"]);
+      queryClient.invalidateQueries(["sortedFolders"]);
+      setEditingFolder(null);
+      setIsEditModalOpen(false);
+    },
+  });
+
   const handleSearch = (query) => {
-    setSearchQuery(query); // Update searchQuery state, triggering a new fetch
-    setSortOrder(""); // Reset sortOrder when searching
+    setSearchQuery(query);
+    setSortOrder("");
   };
 
-  // Handle sorting based on selected option
   const handleFilter = (option) => {
     if (option === "titleAtoZ") {
-      setSortOrder("asc"); // Set sort order to ascending
+      setSortOrder("asc");
     } else if (option === "titleZtoA") {
-      setSortOrder("desc"); // Set sort order to descending
+      setSortOrder("desc");
     }
-    setSearchQuery(""); // Reset search query when sorting
+    setSearchQuery("");
   };
 
-  // Function to handle new folder creation
   const handleNewFolder = (newTitle) => {
-    folderMutation.mutate(newTitle); // Trigger the mutation to create a folder
+    folderMutation.mutate(newTitle);
   };
 
-  // Choose which folder data to display based on whether sorting is applied
+  const handleDeleteFolder = (folderId) => {
+    deleteFolderMutation.mutate(folderId);
+  };
+
+  const handleEditFolder = (folder) => {
+    setEditingFolder(folder);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingFolder) {
+      updateFolderMutation.mutate({
+        id: editingFolder.id,
+        newName: editingFolder.name,
+      });
+    }
+  };
+
   const displayFolders = sortOrder ? sortedFolders : folders;
 
-  // Handle folder click, navigate to the Lists page with the folder ID
   const handleFolderClick = (folderId) => {
-    navigate(`/folders/${folderId}/lists`); // Navigate to Lists page with folder ID
+    navigate(`/folders/${folderId}/lists`);
   };
 
   return (
     <div className="flex-grow">
       <Header
         title="Folders"
-        onSearch={handleSearch} // Search handler will update searchQuery
+        onSearch={handleSearch}
         onNew={handleNewFolder}
-        onFilter={handleFilter} // Pass the filter handler
+        onFilter={handleFilter}
       />
-      <div className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {isLoading || isLoadingSorted ? (
           <p>Loading folders...</p>
         ) : error || sortedError ? (
@@ -123,16 +180,49 @@ const FoldersPage = () => {
           displayFolders.map((folder) => (
             <div
               key={folder.id}
-              className="bg-gray-100 rounded-lg p-4 shadow cursor-pointer"
-              onClick={() => handleFolderClick(folder.id)}
+              className="bg-gray-100 rounded-lg p-4 shadow flex justify-between items-center"
             >
-              {folder.name}
+              <span
+                className="cursor-pointer flex-grow truncate mr-2"
+                onClick={() => handleFolderClick(folder.id)}
+              >
+                {folder.name}
+              </span>
+              <ItemActions
+                onDelete={() => handleDeleteFolder(folder.id)}
+                onEdit={() => handleEditFolder(folder)}
+                itemName={folder.name}
+              />
             </div>
           ))
         ) : (
           <p>No matching folders</p>
         )}
       </div>
+
+      {/* Edit Folder Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Folder"
+      >
+        <input
+          type="text"
+          value={editingFolder?.name || ""}
+          onChange={(e) =>
+            setEditingFolder({ ...editingFolder, name: e.target.value })
+          }
+          className="w-full p-2 border rounded mb-4"
+        />
+        <div className="flex justify-end">
+          <button
+            onClick={handleSaveEdit}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Save
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
