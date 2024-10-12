@@ -125,6 +125,10 @@ const FoldersPage = () => {
       queryClient.invalidateQueries(["sortedFolders"]);
       setEditingFolder(null);
       setIsEditModalOpen(false);
+      toast.success("Folder updated successfully!"); // Add success toast
+    },
+    onError: (error) => {
+      toast.error(`Failed to update folder: ${error.message}`); // Add error toast
     },
   });
 
