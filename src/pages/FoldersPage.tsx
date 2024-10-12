@@ -114,6 +114,10 @@ const FoldersPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(["folders"]);
       queryClient.invalidateQueries(["sortedFolders"]);
+      toast.success("Folder deleted successfully!"); // Add success toast
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete folder: ${error.message}`); // Add error toast
     },
   });
 
