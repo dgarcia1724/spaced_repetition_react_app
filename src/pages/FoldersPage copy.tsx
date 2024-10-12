@@ -163,11 +163,6 @@ const FoldersPage = () => {
     navigate(`/folders/${folderId}/lists`);
   };
 
-  const closeEditModal = () => {
-    setIsEditModalOpen(false);
-    setEditingFolder(null);
-  };
-
   return (
     <div className="flex-grow">
       <Header
@@ -208,10 +203,8 @@ const FoldersPage = () => {
       {/* Edit Folder Modal */}
       <Modal
         isOpen={isEditModalOpen}
-        onClose={closeEditModal}
+        onClose={() => setIsEditModalOpen(false)}
         title="Edit Folder"
-        closeOnEsc={true}
-        closeOnOutsideClick={true}
       >
         <input
           type="text"

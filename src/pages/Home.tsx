@@ -1,4 +1,5 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -12,12 +13,12 @@ export default function Home() {
         </p>
       </header>
 
-      <button
+      <NavLink
+        to="/folders"
         className="bg-blue-500 text-white text-sm sm:text-base py-2 px-4 sm:px-6 rounded-full hover:bg-blue-600 transition duration-300"
-        onClick={() => (window.location.href = "/folders")}
       >
         Go to Folders
-      </button>
+      </NavLink>
     </div>
   );
 }

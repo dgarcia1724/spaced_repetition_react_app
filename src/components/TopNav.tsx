@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome, faFolder } from "@fortawesome/free-solid-svg-icons";
 
@@ -10,25 +10,30 @@ interface NavButtonProps {
 }
 
 const NavButton: React.FC<NavButtonProps> = ({ to, icon, label }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-
   return (
-    <Link
+    <NavLink
       to={to}
-      className={`flex flex-col items-center ${
-        isActive ? "text-blue-700" : "text-blue-500"
-      }`}
+      className={({ isActive }) =>
+        `flex flex-col items-center ${
+          isActive ? "text-blue-700" : "text-blue-500"
+        }`
+      }
     >
-      <FontAwesomeIcon
-        icon={icon}
-        className={`text-xl ${isActive ? "text-blue-700" : "text-blue-500"}`}
-      />
-      <span className={`text-xs mt-1 ${isActive ? "font-bold" : ""}`}>
-        {label}
-      </span>
-      {isActive && <div className="w-full h-1 bg-blue-700 mt-1"></div>}
-    </Link>
+      {({ isActive }) => (
+        <>
+          <FontAwesomeIcon
+            icon={icon}
+            className={`text-xl ${
+              isActive ? "text-blue-700" : "text-blue-500"
+            }`}
+          />
+          <span className={`text-xs mt-1 ${isActive ? "font-bold" : ""}`}>
+            {label}
+          </span>
+          {isActive && <div className="w-full h-1 bg-blue-700 mt-1"></div>}
+        </>
+      )}
+    </NavLink>
   );
 };
 
