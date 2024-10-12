@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify"; // Add this import
 import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
 import ItemActions from "../components/ItemActions";
@@ -94,6 +95,10 @@ const FoldersPage = () => {
     mutationFn: createFolder,
     onSuccess: () => {
       queryClient.invalidateQueries("folders");
+      toast.success("Folder created successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to create folder: " + error.message);
     },
   });
 
