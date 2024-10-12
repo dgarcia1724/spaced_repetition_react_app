@@ -66,6 +66,8 @@ const FoldersPage = () => {
   const [sortOrder, setSortOrder] = useState("");
   const [editingFolder, setEditingFolder] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -139,8 +141,9 @@ const FoldersPage = () => {
     folderMutation.mutate(newTitle);
   };
 
-  const handleDeleteFolder = (folderId) => {
-    deleteFolderMutation.mutate(folderId);
+  const handleDeleteFolder = (folder) => {
+    setFolderToDelete(folder);
+    setIsDeleteModalOpen(true);
   };
 
   const handleEditFolder = (folder) => {
@@ -166,6 +169,19 @@ const FoldersPage = () => {
   const closeEditModal = () => {
     setIsEditModalOpen(false);
     setEditingFolder(null);
+  };
+
+  const confirmDeleteFolder = () => {
+    if (folderToDelete) {
+      deleteFolderMutation.mutate(folderToDelete.id);
+      setIsDeleteModalOpen(false);
+      setFolderToDelete(null);
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setFolderToDelete(null);
   };
 
   return (
@@ -194,7 +210,7 @@ const FoldersPage = () => {
                 {folder.name}
               </span>
               <ItemActions
-                onDelete={() => handleDeleteFolder(folder.id)}
+                onDelete={() => handleDeleteFolder(folder)}
                 onEdit={() => handleEditFolder(folder)}
                 itemName={folder.name}
               />
@@ -227,6 +243,33 @@ const FoldersPage = () => {
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Save
+          </button>
+        </div>
+      </Modal>
+
+      {/* Delete Folder Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        title="Delete Folder"
+        closeOnEsc={true}
+        closeOnOutsideClick={true}
+      >
+        <p className="mb-4">
+          Are you sure you want to delete the folder "{folderToDelete?.name}"?
+        </p>
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={closeDeleteModal}
+            className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmDeleteFolder}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Delete
           </button>
         </div>
       </Modal>
