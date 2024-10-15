@@ -72,6 +72,16 @@ const updateList = async ({ id, newName }) => {
   return response.json();
 };
 
+// Add this function to delete a list
+const deleteList = async (id) => {
+  const response = await fetch(`http://localhost:8080/api/lists/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to delete list");
+  }
+};
+
 const ListsPage = () => {
   const { folderId } = useParams();
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,6 +89,8 @@ const ListsPage = () => {
   const queryClient = useQueryClient();
   const [editingList, setEditingList] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [listToDelete, setListToDelete] = useState(null);
 
   const {
     data: lists,
@@ -122,6 +134,20 @@ const ListsPage = () => {
     },
     onError: (error) => {
       toast.error(`Failed to update list: ${error.message}`);
+    },
+  });
+
+  const deleteListMutation = useMutation({
+    mutationFn: deleteList,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["lists", folderId]);
+      queryClient.invalidateQueries(["sortedLists", folderId]);
+      toast.success("List deleted successfully!");
+      setIsDeleteModalOpen(false);
+      setListToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete list: ${error.message}`);
     },
   });
 
@@ -174,6 +200,22 @@ const ListsPage = () => {
     setEditingList(null);
   };
 
+  const handleDeleteList = (list) => {
+    setListToDelete(list);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteList = () => {
+    if (listToDelete) {
+      deleteListMutation.mutate(listToDelete.id);
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setListToDelete(null);
+  };
+
   return (
     <div className="flex-grow">
       <Header
@@ -196,6 +238,7 @@ const ListsPage = () => {
               <span className="truncate">{list.name}</span>
               <ItemActions
                 onEdit={() => handleEditList(list)}
+                onDelete={() => handleDeleteList(list)}
                 itemName={list.name}
               />
             </div>
@@ -227,6 +270,33 @@ const ListsPage = () => {
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Save
+          </button>
+        </div>
+      </Modal>
+
+      {/* Delete List Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        title="Delete List"
+        closeOnEsc={true}
+        closeOnOutsideClick={true}
+      >
+        <p className="mb-4">
+          Are you sure you want to delete the list "{listToDelete?.name}"?
+        </p>
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={closeDeleteModal}
+            className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmDeleteList}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Delete
           </button>
         </div>
       </Modal>
