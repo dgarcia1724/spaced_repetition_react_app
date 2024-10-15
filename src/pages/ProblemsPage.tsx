@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import Header from "../components/Header";
 import Modal from "../components/Modal";
 
 // Update the Problem interface to match the new data structure
@@ -70,6 +69,19 @@ const updateProblem = async (problem: Problem): Promise<Problem> => {
   return response.json();
 };
 
+// Add a delete problem function
+const deleteProblem = async (problemId: number): Promise<void> => {
+  const response = await fetch(
+    `http://localhost:8080/api/problems/${problemId}`,
+    {
+      method: "DELETE",
+    }
+  );
+  if (!response.ok) {
+    throw new Error("Failed to delete problem");
+  }
+};
+
 // Helper function to get confidence color
 const getConfidenceColor = (confidence: number): string => {
   const colors = [
@@ -92,7 +104,8 @@ const getConfidenceColor = (confidence: number): string => {
 const ProblemItem: React.FC<{
   problem: Problem;
   onEdit: (problem: Problem) => void;
-}> = ({ problem, onEdit }) => {
+  onDelete: (problemId: number) => void;
+}> = ({ problem, onEdit, onDelete }) => {
   return (
     <div className="bg-white rounded-lg p-4 shadow flex justify-between items-center">
       <div className="flex items-center space-x-4">
@@ -101,7 +114,14 @@ const ProblemItem: React.FC<{
             problem.confidence
           )}`}
         ></div>
-        <span>{problem.name}</span>
+        <a
+          href={problem.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 hover:underline"
+        >
+          {problem.name}
+        </a>
       </div>
       <div className="flex space-x-2">
         <button
@@ -117,7 +137,23 @@ const ProblemItem: React.FC<{
             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
           </svg>
         </button>
-        {/* Add delete button if needed */}
+        <button
+          onClick={() => onDelete(problem.id)}
+          className="text-red-500 hover:text-red-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
       </div>
     </div>
   );
@@ -133,6 +169,10 @@ const ProblemsPage: React.FC = () => {
   const [problemLink, setProblemLink] = useState("");
   const [problemConfidence, setProblemConfidence] = useState(10);
   const queryClient = useQueryClient();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingProblemId, setDeletingProblemId] = useState<number | null>(
+    null
+  );
 
   const {
     data: problems,
@@ -164,6 +204,18 @@ const ProblemsPage: React.FC = () => {
           error.message
         }`
       );
+    },
+  });
+
+  const deleteProblemMutation = useMutation({
+    mutationFn: deleteProblem,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["problems", listId]);
+      toast.success("Problem deleted successfully!");
+      setIsDeleteModalOpen(false);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete problem: ${error.message}`);
     },
   });
 
@@ -200,9 +252,23 @@ const ProblemsPage: React.FC = () => {
     }
   };
 
+  const handleDeleteProblem = (problemId: number) => {
+    setDeletingProblemId(problemId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteProblem = () => {
+    if (deletingProblemId) {
+      deleteProblemMutation.mutate(deletingProblemId);
+    }
+  };
+
   return (
     <div className="flex-grow">
-      <Header title={`Problems for ${listName}`} />
+      {/* Replace the Header component with a simple title */}
+      <h1 className="text-2xl font-bold p-4 bg-gray-100">
+        Problems for {listName}
+      </h1>
       <div className="p-4">
         <button
           onClick={() => handleOpenModal()}
@@ -221,6 +287,7 @@ const ProblemsPage: React.FC = () => {
                 key={problem.id}
                 problem={problem}
                 onEdit={handleOpenModal}
+                onDelete={handleDeleteProblem}
               />
             ))}
           </div>
@@ -269,6 +336,31 @@ const ProblemsPage: React.FC = () => {
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             {editingProblem ? "Update" : "Create"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirm Delete"
+        closeOnEsc={true}
+        closeOnOutsideClick={true}
+      >
+        <p>Are you sure you want to delete this problem?</p>
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={() => setIsDeleteModalOpen(false)}
+            className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400 mr-2"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmDeleteProblem}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Delete
           </button>
         </div>
       </Modal>
