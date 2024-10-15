@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import Header from "../components/Header";
@@ -91,6 +91,7 @@ const ListsPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [listToDelete, setListToDelete] = useState(null);
+  const navigate = useNavigate();
 
   const {
     data: lists,
@@ -216,6 +217,10 @@ const ListsPage = () => {
     setListToDelete(null);
   };
 
+  const handleListClick = (listId, listName) => {
+    navigate(`/lists/${listId}/problems`, { state: { listName } });
+  };
+
   return (
     <div className="flex-grow">
       <Header
@@ -235,7 +240,12 @@ const ListsPage = () => {
               key={list.id}
               className="bg-gray-100 rounded-lg p-4 shadow flex justify-between items-center"
             >
-              <span className="truncate">{list.name}</span>
+              <span
+                className="truncate cursor-pointer flex-grow mr-2"
+                onClick={() => handleListClick(list.id, list.name)}
+              >
+                {list.name}
+              </span>
               <ItemActions
                 onEdit={() => handleEditList(list)}
                 onDelete={() => handleDeleteList(list)}

@@ -9,8 +9,8 @@ import TopNav from "./components/TopNav";
 // pages
 import HomePage from "./pages/Home";
 import FoldersPage from "./pages/FoldersPage";
-import ProblemsPage from "./pages/ProblemsPage";
 import ListsPage from "./pages/ListsPage";
+import ProblemsPage from "./pages/ProblemsPage";
 
 function App() {
   return (
@@ -22,7 +22,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/folders" element={<FoldersPage />} />
             <Route path="/folders/:folderId/lists" element={<ListsPage />} />
-            <Route path="/problems/:list" element={<ProblemsPage />} />
+            <Route path="/lists/:listId/problems" element={<ProblemsPage />} />
           </Routes>
         </div>
       </Router>
